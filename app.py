@@ -56,6 +56,7 @@ def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
 
 
 def main():
+    global running
     signal.signal(signal.SIGINT, sigint_handler)
 
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
