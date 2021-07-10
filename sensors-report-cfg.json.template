@@ -1,0 +1,6 @@
+{
+  "mqtt": {
+    "host": "<MQTT Host>",
+    "prefix": "<MQTT Topic Prefix (with trailing slash)"
+  }
+}
