@@ -37,6 +37,21 @@ def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
                 )
 
 
+def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
+    if str(sensor_chip) in cfg_chips:
+        cfg_features = cfg_chips.get(str(sensor_chip), list())
+        for sensor_feature in sensor_chip:
+            cfg_feature = cfg_features['features'].get(sensor_feature.name)
+            if cfg_feature is not None:
+                print('  %s: %.2f' % (sensor_feature.label, sensor_feature.get_value()))
+                topic = mqtt_prefix + cfg_feature['mqtt']
+                print(topic)
+                mqtt_client.publish(
+                    "{}/Value".format(topic),
+                    sensor_feature.get_value()
+                )
+
+
 def main():
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -58,18 +73,7 @@ def main():
     try:
         for sensor_chip in sensors.iter_detected_chips():
             print('%s at %s' % (sensor_chip, sensor_chip.adapter_name))
-            if str(sensor_chip) in cfg_chips:
-                cfg_features = cfg_chips.get(str(sensor_chip), list())
-                for sensor_feature in sensor_chip:
-                    cfg_feature = cfg_features['features'].get(sensor_feature.name)
-                    if cfg_feature is not None:
-                        print('  %s: %.2f' % (sensor_feature.label, sensor_feature.get_value()))
-                        topic = mqtt_prefix+cfg_feature['mqtt']
-                        print(topic)
-                        mqtt_client.publish(
-                            "{}/Value".format(topic),
-                            sensor_feature.get_value()
-                        )
+            emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip)
 
     finally:
         sensors.cleanup()
