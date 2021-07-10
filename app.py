@@ -5,6 +5,7 @@
 import signal
 import sys
 import json
+import time
 
 import mqtt
 
@@ -71,9 +72,15 @@ def main():
 
     sensors.init()
     try:
-        for sensor_chip in sensors.iter_detected_chips():
-            print('%s at %s' % (sensor_chip, sensor_chip.adapter_name))
-            emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip)
+        while running:
+            for sensor_chip in sensors.iter_detected_chips():
+                print('%s at %s' % (sensor_chip, sensor_chip.adapter_name))
+                emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip)
+
+            timer = 5
+            while timer > 0 and running:
+                time.sleep(1)
+                timer = timer - 1
 
     finally:
         sensors.cleanup()
