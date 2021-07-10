@@ -59,12 +59,10 @@ def main():
     with open("sensors-report-cfg.json", "r") as f:
         config = json.load(f)
 
-    if 'mqtt' not in config:
-        raise ValueError("Missing mqtt section in configuration! See template for an example.")
-    mqtt_config = config.get('mqtt')
+    mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
     mqtt_client = mqtt.create_client(mqtt_config)
 
-    mqtt_prefix = mqtt_config.get('prefix', "")
+    mqtt_prefix = mqtt_config.prefix
 
     cfg_chips = config.get('chips', list())
 

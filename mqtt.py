@@ -1,4 +1,29 @@
 import paho.mqtt.client as mqtt
+import util
+
+
+class MqttConfig:
+    @staticmethod
+    def from_env(env_prefix=""):
+        host = util.load_env(env_prefix+"HOST")
+        if host is None:
+            raise KeyError("Missing HOST configuration for MQTT")
+
+        prefix = util.load_env(env_prefix+"PREFIX")
+
+        return MqttConfig(host, prefix)
+
+    def __init__(self, host, prefix=None):
+        self._host = host
+        self._prefix = prefix
+
+    @property
+    def host(self):
+        return self._host
+
+    @property
+    def prefix(self):
+        return self._prefix
 
 
 MQTT_TOPICS = []
@@ -26,17 +51,12 @@ def on_disconnect(mqttc, _userdata, rc):
     print("MQTT client disconnected with code %s" % rc)
 
 
-def create_client(config):
-    if "host" not in config:
-        raise ValueError("Missing MQTT host configuration! See template for an example.")
-
-    host = config.get("host")
-
+def create_client(mqtt_config):
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     try:
-        client.connect(host, 1883, 60)
+        client.connect(mqtt_config.host, 1883, 60)
     except ConnectionRefusedError as e:
         print(f"Failed to connect to MQTT client, will try again: %s" % e)
 
