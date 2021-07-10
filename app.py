@@ -24,6 +24,19 @@ def sigint_handler(_signal, _frame):
         sys.exit(0)
 
 
+def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
+    for chip in cfg_chips:
+        features = cfg_chips.get(chip, list())
+        for feature in features['features'].values():
+            topic = mqtt_prefix + feature['mqtt']
+            label = feature.get('label')
+            if label is not None:
+                mqtt_client.publish(
+                    "{}/Label".format(topic),
+                    label
+                )
+
+
 def main():
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -37,9 +50,12 @@ def main():
 
     mqtt_prefix = mqtt_config.get('prefix', "")
 
+    cfg_chips = config.get('chips', list())
+
+    emit_labels(mqtt_client, mqtt_prefix, cfg_chips)
+
     sensors.init()
     try:
-        cfg_chips = config.get('chips', list())
         for sensor_chip in sensors.iter_detected_chips():
             print('%s at %s' % (sensor_chip, sensor_chip.adapter_name))
             if str(sensor_chip) in cfg_chips:
@@ -50,12 +66,6 @@ def main():
                         print('  %s: %.2f' % (sensor_feature.label, sensor_feature.get_value()))
                         topic = mqtt_prefix+cfg_feature['mqtt']
                         print(topic)
-                        label = cfg_feature.get('label')
-                        if label is not None:
-                            mqtt_client.publish(
-                                "{}/Label".format(topic),
-                                label
-                            )
                         mqtt_client.publish(
                             "{}/Value".format(topic),
                             sensor_feature.get_value()
