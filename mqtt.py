@@ -17,7 +17,6 @@ def add_topic_callback(mqttc, topic, cb):
 
 def on_connect(mqttc, _userdata, _flags, rc):
     print("MQTT client connected with code %s" % rc)
-    set_tray_icon_color(_userdata, status="connected")
 
     for topic in MQTT_TOPICS:
         mqttc.subscribe(topic)
@@ -25,7 +24,6 @@ def on_connect(mqttc, _userdata, _flags, rc):
 
 def on_disconnect(mqttc, _userdata, rc):
     print("MQTT client disconnected with code %s" % rc)
-    set_tray_icon_color(_userdata, status="disconnected")
 
 
 def create_client(config):
