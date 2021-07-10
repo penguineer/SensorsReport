@@ -78,6 +78,9 @@ def main():
     finally:
         sensors.cleanup()
 
+    if mqtt_client.is_connected():
+        mqtt_client.loop_stop()
+
 
 if __name__ == '__main__':
     main()
