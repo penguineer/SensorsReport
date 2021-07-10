@@ -2,5 +2,15 @@
   "mqtt": {
     "host": "<MQTT Host>",
     "prefix": "<MQTT Topic Prefix (with trailing slash)"
+  },
+  "chips": {
+    "<chip name>": {
+      "features": {
+        "<feature name>": {
+          "label": "<feature label>",
+          "mqtt": "<feature mqtt topic (added to prefix)>"
+        }
+      }
+    }
   }
 }
