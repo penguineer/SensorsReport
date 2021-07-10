@@ -35,6 +35,35 @@ def main():
     mqtt_config = config.get('mqtt')
     mqtt_client = mqtt.create_client(mqtt_config)
 
+    mqtt_prefix = mqtt_config.get('prefix', "")
+
+    sensors.init()
+    try:
+        cfg_chips = config.get('chips', list())
+        for sensor_chip in sensors.iter_detected_chips():
+            print('%s at %s' % (sensor_chip, sensor_chip.adapter_name))
+            if str(sensor_chip) in cfg_chips:
+                cfg_features = cfg_chips.get(str(sensor_chip), list())
+                for sensor_feature in sensor_chip:
+                    cfg_feature = cfg_features['features'].get(sensor_feature.name)
+                    if cfg_feature is not None:
+                        print('  %s: %.2f' % (sensor_feature.label, sensor_feature.get_value()))
+                        topic = mqtt_prefix+cfg_feature['mqtt']
+                        print(topic)
+                        label = cfg_feature.get('label')
+                        if label is not None:
+                            mqtt_client.publish(
+                                "{}/Label".format(topic),
+                                label
+                            )
+                        mqtt_client.publish(
+                            "{}/Value".format(topic),
+                            sensor_feature.get_value()
+                        )
+
+    finally:
+        sensors.cleanup()
+
 
 if __name__ == '__main__':
     main()
