@@ -1,0 +1,15 @@
+# Do not forget to create the .env file (see template)
+# before using this container!
+
+version: '2'
+
+services:
+    sensors-report:
+        restart: always
+        build: .
+        env_file:
+            - .env
+        environment:
+          MQTT_HOST: $MQTT_HOST
+          MQTT_PREFIX: $MQTT_PREFIX
+
