@@ -11,6 +11,8 @@ import mqtt
 
 import sensors
 
+import util
+
 running = True
 
 
@@ -56,15 +58,14 @@ def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
 def main():
     signal.signal(signal.SIGINT, sigint_handler)
 
-    with open("sensors-report-cfg.json", "r") as f:
-        config = json.load(f)
-
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
     mqtt_client = mqtt.create_client(mqtt_config)
 
     mqtt_prefix = mqtt_config.prefix
 
-    cfg_chips = config.get('chips', list())
+    cfg_chips = json.loads(util.load_env("SENSORS", "{}"))
+    print("Running with sensors config:")
+    print(json.dumps(cfg_chips, indent=4))
 
     emit_labels(mqtt_client, mqtt_prefix, cfg_chips)
 
