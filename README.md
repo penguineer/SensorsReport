@@ -33,4 +33,4 @@ monitoring system might be more appropriate.
 
 ## License
 
-This project is published unter the MIT license.
+This project is published under the MIT license.
