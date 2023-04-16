@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.9
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests \
