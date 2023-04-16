@@ -24,6 +24,20 @@ The following environment variables are expected:
 
 In the above example, anything listed as `<...>` is meant to be replaced by a value described by the label with the brackets, e.g. `<chip name>` is written as `coretemp-isa-0000` without the brackets.
 
+## Running
+
+With the configuration stored in a file `.env`, the tool can be started as follows:
+
+```bash
+docker run --rm \
+  --env-file .env \
+  mrtux/sensors-report
+```
+
+Alternatively there is a `docker-compose` set up to build and run from the repository.
+
+For production use pre-built docker images are recommended.
+
 ## Contributions
 
 Contributions are welcome and should be made via PR.
