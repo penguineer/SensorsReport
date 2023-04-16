@@ -22,6 +22,8 @@ The following environment variables are expected:
 }
 ```
 
+In the above example, anything listed as `<...>` is meant to be replaced by a value described by the label with the brackets, e.g. `<chip name>` is written as `coretemp-isa-0000` without the brackets.
+
 ## Contributions
 
 Contributions are welcome and should be made via PR.
