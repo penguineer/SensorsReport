@@ -25,6 +25,9 @@ class MqttConfig:
     def prefix(self):
         return self._prefix
 
+    def __str__(self):
+        return f"MqttConfig(host={self._host}, prefix={self._prefix})"
+
 
 MQTT_TOPICS = []
 
