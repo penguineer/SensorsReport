@@ -32,10 +32,57 @@ def mqtt_disconnect_handler(rc):
         logging.warning("MQTT client disconnected unexpectedly with code %s", rc)
 
 
+def verify_sensor_config(cfg_chips):
+    """
+    Verifies the structure of a sensor configuration.
+
+    Args:
+        cfg_chips (dict): The sensor configuration to verify.
+
+    Returns:
+        bool: True if the configuration is valid, False otherwise.
+    """
+    if not isinstance(cfg_chips, dict):
+        logging.error("Configuration must be a dictionary.")
+        return False
+
+    for chip_name, chip_data in cfg_chips.items():
+        if not isinstance(chip_data, dict):
+            logging.error("Chip data for '%s' must be a dictionary.", chip_name)
+            return False
+
+        if "features" not in chip_data or not isinstance(chip_data["features"], dict):
+            logging.error("Chip '%s' must contain a 'features' dictionary.", chip_name)
+            return False
+
+        for feature_name, feature_data in chip_data["features"].items():
+            if not isinstance(feature_data, dict):
+                logging.error("Feature data for '%s/%s' must be a dictionary.", chip_name, feature_name)
+                return False
+
+            if "label" not in feature_data or not isinstance(feature_data["label"], str):
+                logging.warning("Feature '%s/%s' does not have a label.", chip_name, feature_name)
+
+            if "mqtt" not in feature_data or not isinstance(feature_data["mqtt"], str):
+                logging.error("Feature '%s/%s' must contain an 'mqtt' string.", chip_name, feature_name)
+                return False
+
+    # Log a warning if no chips are defined
+    if not cfg_chips:
+        logging.warning("No chips defined in the configuration!")
+
+    # Log a warning if there is a chip with no features
+    for chip_name, chip_data in cfg_chips.items():
+        if "features" in chip_data and not chip_data["features"]:
+            logging.warning("Chip '%s' has no features defined!", chip_name)
+
+    return True
+
+
 def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
     for chip in cfg_chips:
         features = cfg_chips.get(chip, list())
-        for feature_name, feature in features['features'].items():
+        for feature in features['features'].values():
             topic = mqtt_prefix + feature['mqtt']
             label = feature.get('label')
             if label is not None:
@@ -43,8 +90,6 @@ def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
                     "{}/Label".format(topic),
                     label
                 )
-            else:
-                logging.warning("No label found for %s/%s", chip, feature_name)
 
 
 def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
@@ -80,6 +125,12 @@ def main():
         handlers=[logging.StreamHandler()]  # Add a handler to output logs to the console
     )
 
+    cfg_chips = json.loads(util.load_env("SENSORS", "{}"))
+    if not verify_sensor_config(cfg_chips):
+        logging.error("Invalid sensor configuration. Exiting.")
+        sys.exit(1)
+    logging.info("Running with sensors config:\n %s", json.dumps(cfg_chips, indent=4))
+
     global running
     signal.signal(signal.SIGINT, sigint_handler)
 
@@ -88,9 +139,6 @@ def main():
     mqtt_client = mqtt.create_client(mqtt_config, on_disconnect_cb=mqtt_disconnect_handler)
 
     mqtt_prefix = mqtt_config.prefix
-
-    cfg_chips = json.loads(util.load_env("SENSORS", "{}"))
-    logging.info("Running with sensors config:\n %s", json.dumps(cfg_chips, indent=4))
 
     emit_labels(mqtt_client, mqtt_prefix, cfg_chips)
 
