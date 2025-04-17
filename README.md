@@ -1,6 +1,6 @@
 # Sensors Report
 
-> Watch pre-defined lmsensors values and post them to MQTT topics.
+> Watch pre-defined [lm-sensors](https://github.com/lm-sensors/lm-sensors) values and post them to MQTT topics.
 
 ## Configuration
 
@@ -43,9 +43,9 @@ For production use pre-built docker images are recommended.
 
 Contributions are welcome and should be made via PR.
 
-Please not that for any more complicated use cases a fully fledged
+Please note that for any more complicated use cases a fully fledged
 monitoring system might be more appropriate.
 
 ## License
 
-This project is published under the MIT license.
+[MIT](LICENSE) © 2021-2025 Stefan Haun and contributors
