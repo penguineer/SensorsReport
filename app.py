@@ -58,6 +58,13 @@ def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
 
 
 def main():
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,  # Set the logging level to INFO
+        format='%(asctime)s - %(levelname)s - %(message)s',  # Define the log message format
+        handlers=[logging.StreamHandler()]  # Add a handler to output logs to the console
+    )
+
     global running
     signal.signal(signal.SIGINT, sigint_handler)
 
