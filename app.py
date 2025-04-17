@@ -107,6 +107,7 @@ def main():
 
     # noinspection PyUnreachableCode
     if mqtt_client.is_connected():
+        mqtt_client.disconnect()
         mqtt_client.loop_stop()
 
     logging.info("Exiting.")
