@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Author: Stefan Haun <tux@netz39.de>
 
 import signal
@@ -11,6 +10,7 @@ import mqtt
 
 import sensors
 
+import logging
 import util
 
 running = True
@@ -30,7 +30,7 @@ def sigint_handler(_signal, _frame):
 def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
     for chip in cfg_chips:
         features = cfg_chips.get(chip, list())
-        for feature in features['features'].values():
+        for feature_name, feature in features['features'].items():
             topic = mqtt_prefix + feature['mqtt']
             label = feature.get('label')
             if label is not None:
@@ -38,6 +38,8 @@ def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
                     "{}/Label".format(topic),
                     label
                 )
+            else:
+                logging.warning("No label found for %s/%s" % (chip, feature_name))
 
 
 def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
