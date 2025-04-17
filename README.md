@@ -1,6 +1,6 @@
 # Sensors Report
 
-> Watch pre-defined lmsensors values and post them to MQTT topics.
+> Watch pre-defined [lm-sensors](https://github.com/lm-sensors/lm-sensors) values and post them to MQTT topics.
 
 ## Configuration
 
