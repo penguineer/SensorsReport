@@ -27,6 +27,10 @@ def sigint_handler(_signal, _frame):
         logging.info("Receiving SIGINT the second time. Exit.")
         sys.exit(0)
 
+def mqtt_disconnect_handler(rc):
+    if running:  # Only warn if the app is still running
+        logging.warning("MQTT client disconnected unexpectedly with code %s", rc)
+
 
 def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
     for chip in cfg_chips:
@@ -81,7 +85,7 @@ def main():
 
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
     logging.info("Running with MQTT config: %s", mqtt_config)
-    mqtt_client = mqtt.create_client(mqtt_config)
+    mqtt_client = mqtt.create_client(mqtt_config, on_disconnect_cb=mqtt_disconnect_handler)
 
     mqtt_prefix = mqtt_config.prefix
 
