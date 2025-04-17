@@ -1,6 +1,6 @@
 import paho.mqtt.client as mqtt
 import util
-
+import logging
 
 class MqttConfig:
     @staticmethod
@@ -44,14 +44,14 @@ def add_topic_callback(mqttc, topic, cb):
 
 
 def on_connect(mqttc, _userdata, _flags, rc):
-    print("MQTT client connected with code %s" % rc)
+    logging.info("MQTT client connected with code %s", rc)
 
     for topic in MQTT_TOPICS:
         mqttc.subscribe(topic)
 
 
 def on_disconnect(mqttc, _userdata, rc):
-    print("MQTT client disconnected with code %s" % rc)
+    logging.info("MQTT client disconnected with code %s",rc)
 
 
 def create_client(mqtt_config):
@@ -61,7 +61,7 @@ def create_client(mqtt_config):
     try:
         client.connect(mqtt_config.host, 1883, 60)
     except ConnectionRefusedError as e:
-        print(f"Failed to connect to MQTT client, will try again: %s" % e)
+        logging.error(f"Failed to connect to MQTT client, will try again: %s", e)
 
     client.loop_start()
 
