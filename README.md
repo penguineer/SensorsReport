@@ -48,4 +48,4 @@ monitoring system might be more appropriate.
 
 ## License
 
-This project is published under the MIT license.
+[MIT](LICENSE) © 2021-2025 Stefan Haun and contributors
