@@ -43,7 +43,7 @@ For production use pre-built docker images are recommended.
 
 Contributions are welcome and should be made via PR.
 
-Please not that for any more complicated use cases a fully fledged
+Please note that for any more complicated use cases a fully fledged
 monitoring system might be more appropriate.
 
 ## License
