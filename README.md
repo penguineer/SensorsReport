@@ -6,6 +6,7 @@
 
 The following environment variables are expected:
 
+* `LOG_LEVEL` Log level for the application. Possible values are `debug`, `info`, `warning`, `error`, `critical`, `notset`. Defaults to `info`.
 * `MQTT_HOST` Name of the MQTT host
 * `MQTT_TOPIC` Prefix for the MQTT topic
 * `SENSORS` expects a JSON sensor configuration in the following form:

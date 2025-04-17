@@ -5,6 +5,7 @@ import signal
 import sys
 import json
 import time
+import os
 
 import mqtt
 
@@ -56,11 +57,22 @@ def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
                     sensor_feature.get_value()
                 )
 
+def get_log_level():
+    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    levels = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG,
+        "NOTSET": logging.NOTSET,
+    }
+    return levels.get(log_level, logging.INFO)
 
 def main():
     # Configure logging
     logging.basicConfig(
-        level=logging.INFO,  # Set the logging level to INFO
+        level=get_log_level(),  # Set the logging level to INFO
         format='%(asctime)s - %(levelname)s - %(message)s',  # Define the log message format
         handlers=[logging.StreamHandler()]  # Add a handler to output logs to the console
     )
