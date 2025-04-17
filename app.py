@@ -67,6 +67,15 @@ def verify_sensor_config(cfg_chips):
                 logging.error("Feature '%s/%s' must contain an 'mqtt' string.", chip_name, feature_name)
                 return False
 
+    # Log a warning if no chips are defined
+    if not cfg_chips:
+        logging.warning("No chips defined in the configuration!")
+
+    # Log a warning if there is a chip with no features
+    for chip_name, chip_data in cfg_chips.items():
+        if "features" in chip_data and not chip_data["features"]:
+            logging.warning("Chip '%s' has no features defined!", chip_name)
+
     return True
 
 
