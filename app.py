@@ -118,6 +118,12 @@ def main():
         handlers=[logging.StreamHandler()]  # Add a handler to output logs to the console
     )
 
+    cfg_chips = json.loads(util.load_env("SENSORS", "{}"))
+    if not verify_sensor_config(cfg_chips):
+        logging.error("Invalid sensor configuration. Exiting.")
+        sys.exit(1)
+    logging.info("Running with sensors config:\n %s", json.dumps(cfg_chips, indent=4))
+
     global running
     signal.signal(signal.SIGINT, sigint_handler)
 
