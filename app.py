@@ -60,6 +60,7 @@ def main():
     signal.signal(signal.SIGINT, sigint_handler)
 
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
+    print("Running with MQTT config:", mqtt_config)
     mqtt_client = mqtt.create_client(mqtt_config)
 
     mqtt_prefix = mqtt_config.prefix
@@ -88,6 +89,8 @@ def main():
     # noinspection PyUnreachableCode
     if mqtt_client.is_connected():
         mqtt_client.loop_stop()
+
+    print("Exiting.")
 
 
 if __name__ == '__main__':
