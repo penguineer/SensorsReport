@@ -50,14 +50,17 @@ def on_connect(mqttc, _userdata, _flags, rc):
         mqttc.subscribe(topic)
 
 
-def on_disconnect(mqttc, _userdata, rc):
-    logging.info("MQTT client disconnected with code %s",rc)
+def on_disconnect(mqttc, userdata, rc):
+    logging.info("MQTT client disconnected with code %s", rc)
+    if userdata and callable(userdata.get("on_disconnect_cb")):
+        userdata["on_disconnect_cb"](rc)
 
 
-def create_client(mqtt_config):
+def create_client(mqtt_config, on_disconnect_cb=None):
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
+    client.user_data_set({"on_disconnect_cb": on_disconnect_cb})  # Pass callback via userdata
     try:
         client.connect(mqtt_config.host, 1883, 60)
     except ConnectionRefusedError as e:
@@ -66,3 +69,4 @@ def create_client(mqtt_config):
     client.loop_start()
 
     return client
+
