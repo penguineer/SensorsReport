@@ -12,18 +12,21 @@ The following environment variables are expected:
 * `SENSORS` expects a JSON sensor configuration in the following form:
 ```json
 {
-  "<chip name>": {
-    "features": {
-      "<feature name>": {
-        "label": "<feature label>",
-        "mqtt": "<feature mqtt topic (added to prefix)>"
+  "sensors": [
+    {
+      "label": "<sensor feature label>",
+      "topic": "<feature mqtt topic (added to prefix)>",
+      "lm-sensors": {
+        "chip": "<chip name>",
+        "feature": "<feature name>"
       }
     }
-  }
+  ]
 }
 ```
 
 In the above example, anything listed as `<...>` is meant to be replaced by a value described by the label with the brackets, e.g. `<chip name>` is written as `coretemp-isa-0000` without the brackets.
+The top "sensors" object may seem redundant, but allows for future expansion of the configuration.
 
 ## Running
 
