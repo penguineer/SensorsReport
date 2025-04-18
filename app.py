@@ -32,49 +32,73 @@ def mqtt_disconnect_handler(rc):
         logging.warning("MQTT client disconnected unexpectedly with code %s", rc)
 
 
-def verify_sensor_config(cfg_chips):
+def verify_sensor_config(cfg):
     """
-    Verifies the structure of a sensor configuration.
+    Verifies the structure of the updated sensor configuration.
 
     Args:
-        cfg_chips (dict): The sensor configuration to verify.
+        cfg (dict): The sensor configuration to verify.
 
     Returns:
         bool: True if the configuration is valid, False otherwise.
     """
-    if not isinstance(cfg_chips, dict):
+
+    # Define required fields for each sensor
+    REQUIRED_FIELDS = ["label", "topic"]
+
+    # Define required fields for each configuration type
+    PROVIDER_FIELDS = {
+        "lm-sensors": ["chip", "feature"]
+    }
+
+    if not isinstance(cfg, dict):
         logging.error("Configuration must be a dictionary.")
         return False
 
-    for chip_name, chip_data in cfg_chips.items():
-        if not isinstance(chip_data, dict):
-            logging.error("Chip data for '%s' must be a dictionary.", chip_name)
+    sensors = cfg.get("sensors")
+    if not isinstance(sensors, list):
+        logging.error("Configuration must contain a 'sensors' list.")
+        return False
+
+    for sensor in sensors:
+        if not isinstance(sensor, dict):
+            logging.error("Each sensor must be a dictionary.")
             return False
 
-        if "features" not in chip_data or not isinstance(chip_data["features"], dict):
-            logging.error("Chip '%s' must contain a 'features' dictionary.", chip_name)
+        # Validate required fields
+        if not all(isinstance(sensor.get(field), str) for field in REQUIRED_FIELDS):
+            missing = [field for field in REQUIRED_FIELDS if field not in sensor]
+            logging.error("Sensor is missing required fields: %s", ", ".join(missing))
             return False
 
-        for feature_name, feature_data in chip_data["features"].items():
-            if not isinstance(feature_data, dict):
-                logging.error("Feature data for '%s/%s' must be a dictionary.", chip_name, feature_name)
-                return False
+        # Ensure exactly one provider field is specified
+        specified_providers = [key for key in PROVIDER_FIELDS if key in sensor]
+        if len(specified_providers) != 1:
+            if not specified_providers:
+                logging.error(
+                    "Sensor must contain exactly one provider configuration. Possible providers: %s",
+                    ", ".join(PROVIDER_FIELDS.keys())
+                )
+            else:
+                logging.error(
+                    "Sensor must not contain more than one provider configuration. Found: %s",
+                    ", ".join(specified_providers)
+                )
+            return False
 
-            if "label" not in feature_data or not isinstance(feature_data["label"], str):
-                logging.warning("Feature '%s/%s' does not have a label.", chip_name, feature_name)
+        # Validate the fields of the specified provider
+        provider = specified_providers[0]
+        config = sensor[provider]
+        if not isinstance(config, dict):
+            logging.error("'%s' must be a dictionary.", provider)
+            return False
+        if not all(isinstance(config.get(field), str) for field in PROVIDER_FIELDS[provider]):
+            missing = [field for field in PROVIDER_FIELDS[provider] if field not in config]
+            logging.error("'%s' is missing required fields: %s", provider, ", ".join(missing))
+            return False
 
-            if "mqtt" not in feature_data or not isinstance(feature_data["mqtt"], str):
-                logging.error("Feature '%s/%s' must contain an 'mqtt' string.", chip_name, feature_name)
-                return False
-
-    # Log a warning if no chips are defined
-    if not cfg_chips:
-        logging.warning("No chips defined in the configuration!")
-
-    # Log a warning if there is a chip with no features
-    for chip_name, chip_data in cfg_chips.items():
-        if "features" in chip_data and not chip_data["features"]:
-            logging.warning("Chip '%s' has no features defined!", chip_name)
+    if not cfg["sensors"]:
+        logging.warning("No sensors defined in the configuration!")
 
     return True
 
