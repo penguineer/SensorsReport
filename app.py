@@ -9,10 +9,11 @@ import os
 
 import mqtt
 
-import sensors
-
 import logging
 import util
+
+from providers import LmSensorsDataProvider
+from sensor_data_event import SensorDataEvent
 
 running = True
 
@@ -103,36 +104,6 @@ def verify_sensor_config(cfg):
     return True
 
 
-def read_lm_sensors_data():
-    """
-    Reads sensor data using the lm-sensors library and organizes them into a dictionary.
-
-    Returns:
-        dict: A dictionary where each key is a sensor chip name, and the value is another dictionary
-              containing 'adapter_name' and 'features' (a dictionary of feature names and their values).
-    """
-    sensor_data = {}
-
-    for sensor_chip in sensors.iter_detected_chips():
-        chip_name = str(sensor_chip)
-        adapter_name = sensor_chip.adapter_name
-        features = {}
-
-        for feature in sensor_chip:
-            try:
-                feature_value = feature.get_value()
-                features[feature.name] = feature_value
-            except Exception as e:
-                logging.error("Failed to read value for feature '%s' on chip '%s': %s", feature.name, chip_name, e)
-
-        sensor_data[chip_name] = {
-            "adapter_name": adapter_name,
-            "features": features
-        }
-
-    return sensor_data
-
-
 def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
     for sensor in cfg_sensors:
         topic = mqtt_prefix + sensor['topic']
@@ -144,44 +115,18 @@ def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
             )
 
 
-def emit_sensor_data(mqtt_client, mqtt_prefix, lm_sensor_data, cfg_sensors):
+def emit_sensor_data_event(mqtt_client, mqtt_prefix, event):
     """
-    Emits sensor data to MQTT topics based on the provided configuration.
+    Emits a SensorDataEvent to MQTT.
 
     Args:
         mqtt_client: The MQTT client used for publishing.
         mqtt_prefix (str): The prefix for MQTT topics.
-        lm_sensor_data (dict): The dictionary containing sensor data.
-        cfg_sensors (list): The configuration for sensors.
+        event (SensorDataEvent): The sensor data event to emit.
     """
-    for sensor_cfg in cfg_sensors:
-        provider = sensor_cfg.get("lm-sensors")
-        if not provider:
-            continue
-
-        chip_name = provider.get("chip")
-        feature_name = provider.get("feature")
-
-        if not chip_name in lm_sensor_data:
-            logging.warning("Chip '%s' not found in lm-sensors data.", chip_name)
-        else:
-            chip_data = lm_sensor_data[chip_name]
-            feature_value = chip_data["features"].get(feature_name)
-
-            if feature_value is None:
-                logging.warning("Feature '%s' in chip '%s' did not provide a value.", feature_name, chip_name)
-            else:
-                topic = mqtt_prefix + sensor_cfg["topic"]
-
-                logging.info(
-                    "Emitting chip='%s', feature='%s', value=%.2f, adapter='%s' to '%s'",
-                    chip_name, feature_name, feature_value, chip_data["adapter_name"], topic
-                )
-
-                mqtt_client.publish(
-                    f"{topic}/Value",
-                    feature_value
-                )
+    topic = f"{mqtt_prefix}{event.sensor_config['topic']}/Value"
+    logging.info("Emitting %s to %s from %s", event.value, topic, event)
+    mqtt_client.publish(topic, event.value)
 
 
 def get_log_level():
@@ -221,26 +166,34 @@ def main():
 
     emit_labels(mqtt_client, mqtt_prefix, cfg_sensors['sensors'])
 
-    sensors.init()
-    try:
-        while running:
-            lm_sensor_data = read_lm_sensors_data()
-            emit_sensor_data(mqtt_client, mqtt_prefix, lm_sensor_data, cfg_sensors['sensors'])
+    # Build the list of data providers
+    providers = []
+    # Add lm-sensors provider
+    lm_sensors_provider = LmSensorsDataProvider(cfg_sensors['sensors'])
+    providers.append(lm_sensors_provider)
 
-            timer = 5
-            while timer > 0 and running:
-                time.sleep(1)
-                timer = timer - 1
+    while running:
+        # Collect sensor data
+        data_events = []
+        for provider in providers:
+            try:
+                data_events.extend(provider.retrieve())
+            except Exception as e:
+                logging.error("Failed to retrieve data from provider %s: %s", type(provider).__name__, e)
 
-    finally:
-        sensors.cleanup()
+        # Emit sensor data to MQTT
+        for event in data_events:
+            emit_sensor_data_event(mqtt_client, mqtt_prefix, event)
+
+        timer = 5
+        while timer > 0 and running:
+            time.sleep(1)
+            timer = timer - 1
 
     # noinspection PyUnreachableCode
     if mqtt_client.is_connected():
         mqtt_client.disconnect()
         mqtt_client.loop_stop()
-
-    logging.info("Exiting.")
 
 
 if __name__ == '__main__':
