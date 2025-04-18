@@ -204,11 +204,11 @@ def main():
         handlers=[logging.StreamHandler()]  # Add a handler to output logs to the console
     )
 
-    cfg_chips = json.loads(util.load_env("SENSORS", "{}"))
-    if not verify_sensor_config(cfg_chips):
+    cfg_sensors = json.loads(util.load_env("SENSORS", "{}"))
+    if not verify_sensor_config(cfg_sensors):
         logging.error("Invalid sensor configuration. Exiting.")
         sys.exit(1)
-    logging.info("Running with sensors config:\n %s", json.dumps(cfg_chips, indent=4))
+    logging.info("Running with sensors config:\n %s", json.dumps(cfg_sensors, indent=4))
 
     global running
     signal.signal(signal.SIGINT, sigint_handler)
@@ -219,14 +219,13 @@ def main():
 
     mqtt_prefix = mqtt_config.prefix
 
-    emit_labels(mqtt_client, mqtt_prefix, cfg_chips['sensors'])
+    emit_labels(mqtt_client, mqtt_prefix, cfg_sensors['sensors'])
 
     sensors.init()
     try:
         while running:
-            for sensor_chip in sensors.iter_detected_chips():
-                logging.info("%s at %s", sensor_chip, sensor_chip.adapter_name)
-                emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip)
+            lm_sensor_data = read_lm_sensors_data()
+            emit_sensor_data(mqtt_client, mqtt_prefix, lm_sensor_data, cfg_sensors['sensors'])
 
             timer = 5
             while timer > 0 and running:
