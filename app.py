@@ -144,18 +144,45 @@ def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
             )
 
 
-def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
-    if str(sensor_chip) in cfg_chips:
-        cfg_features = cfg_chips.get(str(sensor_chip), list())
-        for sensor_feature in sensor_chip:
-            cfg_feature = cfg_features['features'].get(sensor_feature.name)
-            if cfg_feature is not None:
-                topic = mqtt_prefix + cfg_feature['mqtt']
-                logging.info("%s  %s: %.2f", topic, sensor_feature.label, sensor_feature.get_value())
-                mqtt_client.publish(
-                    "{}/Value".format(topic),
-                    sensor_feature.get_value()
+def emit_sensor_data(mqtt_client, mqtt_prefix, lm_sensor_data, cfg_sensors):
+    """
+    Emits sensor data to MQTT topics based on the provided configuration.
+
+    Args:
+        mqtt_client: The MQTT client used for publishing.
+        mqtt_prefix (str): The prefix for MQTT topics.
+        lm_sensor_data (dict): The dictionary containing sensor data.
+        cfg_sensors (list): The configuration for sensors.
+    """
+    for sensor_cfg in cfg_sensors:
+        provider = sensor_cfg.get("lm-sensors")
+        if not provider:
+            continue
+
+        chip_name = provider.get("chip")
+        feature_name = provider.get("feature")
+
+        if not chip_name in lm_sensor_data:
+            logging.warning("Chip '%s' not found in lm-sensors data.", chip_name)
+        else:
+            chip_data = lm_sensor_data[chip_name]
+            feature_value = chip_data["features"].get(feature_name)
+
+            if feature_value is None:
+                logging.warning("Feature '%s' in chip '%s' did not provide a value.", feature_name, chip_name)
+            else:
+                topic = mqtt_prefix + sensor_cfg["topic"]
+
+                logging.info(
+                    "Emitting chip='%s', feature='%s', value=%.2f, adapter='%s' to '%s'",
+                    chip_name, feature_name, feature_value, chip_data["adapter_name"], topic
                 )
+
+                mqtt_client.publish(
+                    f"{topic}/Value",
+                    feature_value
+                )
+
 
 def get_log_level():
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
