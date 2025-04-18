@@ -11,4 +11,6 @@ services:
         environment:
           MQTT_HOST: $MQTT_HOST
           MQTT_PREFIX: $MQTT_PREFIX
+        volumes:
+            - /tmp:/tmp:r
 
