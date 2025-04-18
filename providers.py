@@ -1,3 +1,4 @@
+import os
 import logging
 from abc import ABC, abstractmethod
 
@@ -104,3 +105,40 @@ class LmSensorsDataProvider(SensorDataProvider):
             }
 
         return sensor_data
+
+
+class FileDataProvider:
+    """
+    A sensor data provider implementation for reading data from a file.
+    """
+
+    def __init__(self, sensor_config):
+        """
+        Initialize the FileDataProvider with a single sensor's configuration.
+
+        Args:
+            sensor_config (dict): The configuration of the sensor.
+        """
+        self.sensor_config = sensor_config
+        self.file_path = sensor_config.get('file', {}).get('path')
+
+        if not self.file_path:
+            raise ValueError("Sensor configuration must include a valid file path.")
+
+        if not os.path.exists(self.file_path):
+            logging.warning("File path '%s' does not exist for sensor '%s'.", self.file_path, sensor_config.get('label', '<no label provided>'))
+
+    def retrieve(self):
+        """
+        Retrieve the sensor value by reading from the file.
+
+        Returns:
+            list[SensorDataEvent]: A list containing a single SensorDataEvent, or an empty list if the file cannot be read.
+        """
+        try:
+            with open(self.file_path, 'r') as file:
+                value = file.read().strip()  # Read and remove the final newline
+                return [SensorDataEvent(self.sensor_config, value)]
+        except Exception as e:
+            logging.error("Failed to read file '%s' for sensor '%s': %s", self.file_path, self.sensor_config['label'], e)
+            return []
