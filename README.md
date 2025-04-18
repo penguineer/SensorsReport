@@ -51,12 +51,13 @@ With the configuration stored in a file `.env`, the tool can be started as follo
 ```bash
 docker run --rm \
   --env-file .env \
-  mrtux/sensors-report
+  mrtux/sensors-report:latest
 ```
 
-Alternatively there is a `docker-compose` set up to build and run from the repository.
+Please replace `latest` with the version you want to run. The latest version is not guaranteed to be stable.
 
-For production use pre-built docker images are recommended.
+Alternatively there is a `docker compose` set up to build and run from the repository.
+For production use [pre-built docker images](https://hub.docker.com/r/mrtux/sensors-report/) are recommended.
 
 ## Contributions
 
