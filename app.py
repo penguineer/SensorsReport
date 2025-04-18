@@ -103,17 +103,15 @@ def verify_sensor_config(cfg):
     return True
 
 
-def emit_labels(mqtt_client, mqtt_prefix, cfg_chips):
-    for chip in cfg_chips:
-        features = cfg_chips.get(chip, list())
-        for feature in features['features'].values():
-            topic = mqtt_prefix + feature['mqtt']
-            label = feature.get('label')
-            if label is not None:
-                mqtt_client.publish(
-                    "{}/Label".format(topic),
-                    label
-                )
+def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
+    for sensor in cfg_sensors:
+        topic = mqtt_prefix + sensor['topic']
+        label = sensor.get('label')
+        if label is not None:
+            mqtt_client.publish(
+                "{}/Label".format(topic),
+                label
+            )
 
 
 def emit_chip_values(mqtt_client, mqtt_prefix, cfg_chips, sensor_chip):
@@ -164,7 +162,7 @@ def main():
 
     mqtt_prefix = mqtt_config.prefix
 
-    emit_labels(mqtt_client, mqtt_prefix, cfg_chips)
+    emit_labels(mqtt_client, mqtt_prefix, cfg_chips['sensors'])
 
     sensors.init()
     try:
