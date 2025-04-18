@@ -12,7 +12,7 @@ import mqtt
 import logging
 import util
 
-from providers import LmSensorsDataProvider
+from providers import LmSensorsDataProvider, FileDataProvider
 from sensor_data_event import SensorDataEvent
 
 running = True
@@ -49,7 +49,8 @@ def verify_sensor_config(cfg):
 
     # Define required fields for each configuration type
     PROVIDER_FIELDS = {
-        "lm-sensors": ["chip", "feature"]
+        "lm-sensors": ["chip", "feature"],
+        "file": ["path"]
     }
 
     if not isinstance(cfg, dict):
@@ -171,6 +172,10 @@ def main():
     # Add lm-sensors provider
     lm_sensors_provider = LmSensorsDataProvider(cfg_sensors['sensors'])
     providers.append(lm_sensors_provider)
+    # Add file providers
+    for sensor in (s for s in cfg_sensors['sensors'] if s.get('file')):
+        file_provider = FileDataProvider(sensor)
+        providers.append(file_provider)
 
     while running:
         # Collect sensor data
