@@ -103,6 +103,36 @@ def verify_sensor_config(cfg):
     return True
 
 
+def read_lm_sensors_data():
+    """
+    Reads sensor data using the lm-sensors library and organizes them into a dictionary.
+
+    Returns:
+        dict: A dictionary where each key is a sensor chip name, and the value is another dictionary
+              containing 'adapter_name' and 'features' (a dictionary of feature names and their values).
+    """
+    sensor_data = {}
+
+    for sensor_chip in sensors.iter_detected_chips():
+        chip_name = str(sensor_chip)
+        adapter_name = sensor_chip.adapter_name
+        features = {}
+
+        for feature in sensor_chip:
+            try:
+                feature_value = feature.get_value()
+                features[feature.name] = feature_value
+            except Exception as e:
+                logging.error("Failed to read value for feature '%s' on chip '%s': %s", feature.name, chip_name, e)
+
+        sensor_data[chip_name] = {
+            "adapter_name": adapter_name,
+            "features": features
+        }
+
+    return sensor_data
+
+
 def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
     for sensor in cfg_sensors:
         topic = mqtt_prefix + sensor['topic']
