@@ -49,7 +49,8 @@ def verify_sensor_config(cfg):
 
     # Define required fields for each configuration type
     PROVIDER_FIELDS = {
-        "lm-sensors": ["chip", "feature"]
+        "lm-sensors": ["chip", "feature"],
+        "file": ["path"]
     }
 
     if not isinstance(cfg, dict):
