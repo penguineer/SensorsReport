@@ -20,6 +20,13 @@ The following environment variables are expected:
         "chip": "<chip name>",
         "feature": "<feature name>"
       }
+    },
+    {
+      "label": "<sensor feature label>",
+      "topic": "<feature mqtt topic (added to prefix)>",
+      "file": {
+        "path": "<file path to read>"
+      }
     }
   ]
 }
@@ -27,6 +34,15 @@ The following environment variables are expected:
 
 In the above example, anything listed as `<...>` is meant to be replaced by a value described by the label with the brackets, e.g. `<chip name>` is written as `coretemp-isa-0000` without the brackets.
 The top "sensors" object may seem redundant, but allows for future expansion of the configuration.
+
+### Data Providers
+
+The following data providers are available:
+* **lm-sensors**: Reads the value from the lm-sensors chip and feature name.
+  * `chip`: The name of the chip as shown by `sensors -l`
+  * `feature`: The name of the feature as shown by `sensors -l` 
+* **file**: Reads the value from a file.
+  * `path`: The path to the file to read. The file must contain a single line with the value to be read. A final newline will be stripped.
 
 ## Running
 
