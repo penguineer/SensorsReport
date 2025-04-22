@@ -14,6 +14,7 @@ import util
 
 from providers import LmSensorsDataProvider, FileDataProvider
 from sensor_data_event import SensorDataEvent
+from cloudevents import CloudEventGenerator
 
 running = True
 
@@ -47,7 +48,7 @@ def verify_sensor_config(cfg):
     # Define required fields for each sensor
     REQUIRED_FIELDS = ["label", "topic"]
 
-    # Define required fields for each configuration type
+    # Define required fields for each configuration event_type
     PROVIDER_FIELDS = {
         "lm-sensors": ["chip", "feature"],
         "file": ["path"]
@@ -130,6 +131,28 @@ def emit_sensor_data_event(mqtt_client, mqtt_prefix, event):
     mqtt_client.publish(topic, event.value)
 
 
+def emit_cloudevent(mqtt_client, mqtt_topic_ce, mqtt_topic_prefix, generator, event: SensorDataEvent):
+    """
+    Emits a CloudEvent to MQTT.
+
+    Args:
+        mqtt_client: The MQTT client used for publishing.
+        mqtt_topic_ce (str): The MQTT topic for the CloudEvent, can be None if not configured.
+        mqtt_topic_prefix (str): The MQTT topic prefix for the CloudEvent, if mqtt_topic_ce is None.
+        generator: The CloudEventGenerator instance used to create the event.
+        event: The sensor event to emit.
+    """
+    # Create the CloudEvent
+    ce = event.as_cloud_event_data(generator)
+
+    # Publish the CloudEvent to MQTT
+    topic = mqtt_topic_ce or f"{mqtt_topic_prefix}/{event.topic()}/CloudEvent"
+    payload = json.dumps(ce)
+    
+    logging.info("Emitting CloudEvent to %s: %s", topic, payload)
+    mqtt_client.publish(topic, payload)
+
+
 def get_log_level():
     log_level = os.getenv("LOG_LEVEL", "INFO").upper()
     levels = {
@@ -141,6 +164,24 @@ def get_log_level():
         "NOTSET": logging.NOTSET,
     }
     return levels.get(log_level, logging.INFO)
+
+
+def create_cloudevent_generator():
+    """
+    Creates and returns a CloudEventGenerator instance configured with
+    the source and event_type attributes from environment variables.
+
+    Returns:
+        CloudEventGenerator: An instance of the CloudEventGenerator.
+    """
+
+    # Load source and event_type from environment variables with defaults
+    source = os.getenv("CE_SOURCE", "https://github.com/penguineer/SensorsReport")
+    event_type = os.getenv("CE_TYPE", "io.github.penguineer.SensorsReport.measurement")
+
+    # Create and return the CloudEventGenerator instance
+    return CloudEventGenerator(source=source, event_type=event_type)
+
 
 def main():
     # Configure logging
@@ -164,8 +205,12 @@ def main():
     mqtt_client = mqtt.create_client(mqtt_config, on_disconnect_cb=mqtt_disconnect_handler)
 
     mqtt_prefix = mqtt_config.prefix
+    mqtt_ce_topic = util.load_env("CE_MQTT_TOPIC", None)
 
     emit_labels(mqtt_client, mqtt_prefix, cfg_sensors['sensors'])
+
+    # Create the CloudEvent generator
+    ce_generator = create_cloudevent_generator()
 
     # Build the list of data providers
     providers = []
@@ -189,6 +234,7 @@ def main():
         # Emit sensor data to MQTT
         for event in data_events:
             emit_sensor_data_event(mqtt_client, mqtt_prefix, event)
+            emit_cloudevent(mqtt_client, mqtt_ce_topic, mqtt_prefix, ce_generator, event)
 
         timer = 5
         while timer > 0 and running:

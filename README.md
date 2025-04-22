@@ -9,6 +9,9 @@ The following environment variables are expected:
 * `LOG_LEVEL` Log level for the application. Possible values are `debug`, `info`, `warning`, `error`, `critical`, `notset`. Defaults to `info`.
 * `MQTT_HOST` Name of the MQTT host
 * `MQTT_TOPIC` Prefix for the MQTT topic
+* `CE_SOURCE` Source attribute for the Cloud Events message (see [CloudEvents](https://cloudevents.io/) and [CloudEvents attributes](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#context-attributes)), defaults to `https://github.com/penguineer/SensorsReport`.
+* `CE_TYPE` Type attribute for the Cloud Events message, defaults to `io.github.penguineer.SensorsReport.measurement`.
+* `CE_MQTT_TOPIC` Topic for the Cloud Events message. If not specified, `/CloudEvent` will be added to the sensor's generated topic. Please note that this will lead to a burst of messages on a single topic!
 * `SENSORS` expects a JSON sensor configuration in the following form:
 ```json
 {
@@ -31,7 +34,6 @@ The following environment variables are expected:
   ]
 }
 ```
-
 In the above example, anything listed as `<...>` is meant to be replaced by a value described by the label with the brackets, e.g. `<chip name>` is written as `coretemp-isa-0000` without the brackets.
 The top "sensors" object may seem redundant, but allows for future expansion of the configuration.
 
@@ -43,6 +45,26 @@ The following data providers are available:
   * `feature`: The name of the feature as shown by `sensors -l` 
 * **file**: Reads the value from a file.
   * `path`: The path to the file to read. The file must contain a single line with the value to be read. A final newline will be stripped.
+
+### CloudEvent message
+
+The report is emitted as a [CloudEvents](https://cloudevents.io/) message. The following attributes are set:
+
+```json
+{
+  "specversion": "1.0",
+  "event_id": "<UUID>",
+  "source": "https://github.com/penguineer/SensorsReport",
+  "event_type": "io.github.penguineer.SensorsReport.measurement",
+  "time": "<ISO 8601 timestamp>",
+  "subject": "<The sensor's topic>",
+  "datacontenttype": "application/json",
+  "data": {
+    "sensor_config": "<The sensor config dictionary is repeated here as JSON value>",
+    "value": "<Measured sensor value>"
+  }
+}
+```
 
 ## Running
 
