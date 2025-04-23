@@ -60,11 +60,13 @@ The report is emitted as a [CloudEvents](https://cloudevents.io/) message. The f
   "subject": "<The sensor's topic>",
   "datacontenttype": "application/json",
   "data": {
-    "sensor_config": "<The sensor config dictionary is repeated here as JSON value>",
+    "topic": "<The sensor's topic>",
+    "label": "<The sensor's label, if configured>",
     "value": "<Measured sensor value>"
   }
 }
 ```
+The sensor's topic is mirrored to the subject attribute to allow out-of-band filtering of the messages with intermediary handlers.
 
 ## Running
 

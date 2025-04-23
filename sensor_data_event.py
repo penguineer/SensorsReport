@@ -1,6 +1,3 @@
-from cloudevents import CloudEventGenerator
-
-
 class SensorDataEvent:
     """
     Represents a measurement from one sensor.
@@ -27,7 +24,8 @@ class SensorDataEvent:
         return generator.generate(
             subject=self.sensor_config['topic'],
             data={
-                "sensor_config": self.sensor_config,
+                "topic": self.sensor_config['topic'],
+                "label": self.sensor_config['label'],
                 "value": self.value
             })
 
