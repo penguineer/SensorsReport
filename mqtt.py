@@ -70,3 +70,19 @@ def create_client(mqtt_config, on_disconnect_cb=None):
 
     return client
 
+def join_topics(prefix, *subtopics):
+    """
+    Joins an MQTT topic prefix with one or more subtopics, ensuring exactly one slash between each part.
+    Preserves leading slashes in the topic prefix.
+
+    Args:
+        prefix (str): The MQTT topic prefix.
+        *subtopics (str): One or more MQTT subtopics.
+
+    Returns:
+        str: The combined MQTT topic.
+    """
+    # Strip slashes from the ends of subtopics and join them with a single slash
+    middle = "/".join(subtopic.strip("/") for subtopic in subtopics)
+    # Combine prefix and middle, preserving leading slashes
+    return f"{prefix.rstrip('/')}/{middle}" if middle else prefix
