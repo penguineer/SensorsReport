@@ -29,6 +29,7 @@ def sigint_handler(_signal, _frame):
         logging.info("Receiving SIGINT the second time. Exit.")
         sys.exit(0)
 
+
 def mqtt_disconnect_handler(rc):
     if running:  # Only warn if the app is still running
         logging.warning("MQTT client disconnected unexpectedly with code %s", rc)
@@ -108,13 +109,12 @@ def verify_sensor_config(cfg):
 
 def emit_labels(mqtt_client, mqtt_prefix, cfg_sensors):
     for sensor in cfg_sensors:
-        topic = mqtt_prefix + sensor['topic']
         label = sensor.get('label')
         if label is not None:
-            mqtt_client.publish(
-                "{}/Label".format(topic),
-                label
-            )
+            topic = mqtt.join_topics(mqtt_prefix,
+                                     sensor['topic'],
+                                     "/Label")
+            mqtt_client.publish(topic, label)
 
 
 def emit_sensor_data_event(mqtt_client, mqtt_prefix, event):
@@ -126,7 +126,9 @@ def emit_sensor_data_event(mqtt_client, mqtt_prefix, event):
         mqtt_prefix (str): The prefix for MQTT topics.
         event (SensorDataEvent): The sensor data event to emit.
     """
-    topic = f"{mqtt_prefix}{event.sensor_config['topic']}/Value"
+    topic = mqtt.join_topics(mqtt_prefix,
+                             event.sensor_config['topic'],
+                             "/Value")
     logging.info("Emitting %s to %s from %s", event.value, topic, event)
     mqtt_client.publish(topic, event.value)
 
@@ -146,9 +148,11 @@ def emit_cloudevent(mqtt_client, mqtt_topic_ce, mqtt_topic_prefix, generator, ev
     ce = event.as_cloud_event_data(generator)
 
     # Publish the CloudEvent to MQTT
-    topic = mqtt_topic_ce or f"{mqtt_topic_prefix}/{event.topic()}/CloudEvent"
+    topic = mqtt_topic_ce or mqtt.join_topics(mqtt_topic_prefix,
+                                              event.sensor_config['topic'],
+                                              "/CloudEvent")
     payload = json.dumps(ce)
-    
+
     logging.info("Emitting CloudEvent to %s: %s", topic, payload)
     mqtt_client.publish(topic, payload)
 
