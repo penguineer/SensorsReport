@@ -1,4 +1,4 @@
-FROM python:3.13
+FROM python:3.14
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests \
