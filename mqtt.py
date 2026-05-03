@@ -43,8 +43,11 @@ def add_topic_callback(mqttc, topic, cb):
     mqttc.message_callback_add(topic, cb)
 
 
-def on_connect(mqttc, _userdata, _flags, rc):
+def on_connect(mqttc, userdata, _flags, rc):
     logging.info("MQTT client connected with code %s", rc)
+
+    if userdata and userdata.get("lwt_topic"):
+        mqttc.publish(userdata["lwt_topic"], "online", retain=True)
 
     for topic in MQTT_TOPICS:
         mqttc.subscribe(topic)
@@ -60,7 +63,14 @@ def create_client(mqtt_config, on_disconnect_cb=None):
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
-    client.user_data_set({"on_disconnect_cb": on_disconnect_cb})  # Pass callback via userdata
+
+    lwt_topic = join_topics(mqtt_config.prefix, "status") if mqtt_config.prefix else None
+    client.user_data_set({"on_disconnect_cb": on_disconnect_cb, "lwt_topic": lwt_topic})
+
+    if lwt_topic:
+        client.will_set(lwt_topic, "offline", retain=True)
+        logging.info("MQTT LWT set on topic %s", lwt_topic)
+
     try:
         client.connect(mqtt_config.host, 1883, 60)
     except ConnectionRefusedError as e:
