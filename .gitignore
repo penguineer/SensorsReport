@@ -1,2 +1,3 @@
 sensors-report-cfg.json
 .env
+__pycache__/

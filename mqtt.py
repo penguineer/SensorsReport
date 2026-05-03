@@ -43,8 +43,8 @@ def add_topic_callback(mqttc, topic, cb):
     mqttc.message_callback_add(topic, cb)
 
 
-def on_connect(mqttc, userdata, _flags, rc):
-    logging.info("MQTT client connected with code %s", rc)
+def on_connect(mqttc, userdata, _connect_flags, reason_code, _properties):
+    logging.info("MQTT client connected with code %s", reason_code)
 
     if userdata and userdata.get("lwt_topic"):
         mqttc.publish(userdata["lwt_topic"], "online", retain=True)
@@ -53,14 +53,14 @@ def on_connect(mqttc, userdata, _flags, rc):
         mqttc.subscribe(topic)
 
 
-def on_disconnect(mqttc, userdata, rc):
-    logging.info("MQTT client disconnected with code %s", rc)
+def on_disconnect(mqttc, userdata, _disconnect_flags, reason_code, _properties):
+    logging.info("MQTT client disconnected with code %s", reason_code)
     if userdata and callable(userdata.get("on_disconnect_cb")):
-        userdata["on_disconnect_cb"](rc)
+        userdata["on_disconnect_cb"](reason_code)
 
 
 def create_client(mqtt_config, on_disconnect_cb=None):
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
 
