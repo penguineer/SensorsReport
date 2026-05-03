@@ -80,6 +80,21 @@ def create_client(mqtt_config, on_disconnect_cb=None):
 
     return client
 
+def disconnect_client(client):
+    """Gracefully disconnect the MQTT client, explicitly publishing offline status first."""
+    userdata = client.user_data_get()
+    if userdata and userdata.get("lwt_topic") and client.is_connected():
+        result = client.publish(userdata["lwt_topic"], "offline", retain=True)
+        try:
+            result.wait_for_publish(timeout=5)
+            logging.info("Published offline status to %s", userdata["lwt_topic"])
+        except Exception as e:
+            logging.warning("Could not confirm offline status publish: %s", e)
+    if client.is_connected():
+        client.disconnect()
+    client.loop_stop()
+
+
 def join_topics(prefix, *subtopics):
     """
     Joins an MQTT topic prefix with one or more subtopics, ensuring exactly one slash between each part.
