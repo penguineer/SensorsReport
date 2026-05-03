@@ -246,9 +246,7 @@ def main():
             timer = timer - 1
 
     # noinspection PyUnreachableCode
-    if mqtt_client.is_connected():
-        mqtt_client.disconnect()
-        mqtt_client.loop_stop()
+    mqtt.disconnect_client(mqtt_client)
 
 
 if __name__ == '__main__':

@@ -12,6 +12,12 @@ The following environment variables are expected:
 * `CE_SOURCE` Source attribute for the Cloud Events message (see [CloudEvents](https://cloudevents.io/) and [CloudEvents attributes](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#context-attributes)), defaults to `https://github.com/penguineer/SensorsReport`.
 * `CE_TYPE` Type attribute for the Cloud Events message, defaults to `io.github.penguineer.SensorsReport.measurement`.
 * `CE_MQTT_TOPIC` Topic for the Cloud Events message. If not specified, `/CloudEvent` will be added to the sensor's generated topic. Please note that this will lead to a burst of messages on a single topic!
+
+### Status topic
+
+When `MQTT_PREFIX` is configured, a status message is published to `{MQTT_PREFIX}/status`:
+* `online` is published (retained) when the MQTT connection is established.
+* `offline` is set as the MQTT [Last Will and Testament](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/) (retained), so the broker publishes it automatically if the client disconnects unexpectedly.
 * `SENSORS` expects a JSON sensor configuration in the following form:
 ```json
 {
