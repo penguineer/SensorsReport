@@ -30,6 +30,13 @@ def sigint_handler(_signal, _frame):
         sys.exit(0)
 
 
+def sigterm_handler(_signal, _frame):
+    global running
+
+    logging.info("SIGTERM received. Stopping the queue.")
+    running = False
+
+
 def mqtt_disconnect_handler(rc):
     if running:  # Only warn if the app is still running
         logging.warning("MQTT client disconnected unexpectedly with code %s", rc)
@@ -203,6 +210,7 @@ def main():
 
     global running
     signal.signal(signal.SIGINT, sigint_handler)
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
     logging.info("Running with MQTT config: %s", mqtt_config)
