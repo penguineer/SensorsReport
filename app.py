@@ -19,22 +19,16 @@ from cloudevents import CloudEventGenerator
 running = True
 
 
-def sigint_handler(_signal, _frame):
+def shutdown_handler(sig, _frame):
     global running
 
+    sig_name = signal.Signals(sig).name
     if running:
-        logging.info("SIGINT received. Stopping the queue.")
+        logging.info("%s received. Stopping the queue.", sig_name)
         running = False
     else:
-        logging.info("Receiving SIGINT the second time. Exit.")
+        logging.info("Receiving %s the second time. Exit.", sig_name)
         sys.exit(0)
-
-
-def sigterm_handler(_signal, _frame):
-    global running
-
-    logging.info("SIGTERM received. Stopping the queue.")
-    running = False
 
 
 def mqtt_disconnect_handler(rc):
@@ -209,8 +203,8 @@ def main():
     logging.info("Running with sensors config:\n %s", json.dumps(cfg_sensors, indent=4))
 
     global running
-    signal.signal(signal.SIGINT, sigint_handler)
-    signal.signal(signal.SIGTERM, sigterm_handler)
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
 
     mqtt_config = mqtt.MqttConfig.from_env("MQTT_")
     logging.info("Running with MQTT config: %s", mqtt_config)
